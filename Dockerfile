@@ -92,7 +92,7 @@ RUN chmod +x /usr/local/bin/comfy-manager-set-mode
 # Install custom nodes from snapshot
 # ============================================================================
 # Copy the snapshot file to the root directory
-COPY snapshot-multi_lighting.json /snapshot-multi_lighting.json
+COPY snapshot-light_reference.json /snapshot-light_reference.json
   
 # Copy and execute the restore snapshot script
 COPY src/restore_snapshot.sh /restore_snapshot.sh
