@@ -53,11 +53,15 @@ Use the `/runsync` endpoint for synchronous requests that wait for the job to co
 
 This API has been simplified to accept only the required images without needing to provide the full workflow JSON. The workflow is constructed automatically on the server side.
 
+Images can be provided as either:
+- **Base64 encoded strings** (with or without data URI prefix)
+- **HTTP/HTTPS URLs** (images will be downloaded automatically)
+
 ```json
 {
   "input": {
-    "main_image": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAAAAAAAD...",
-    "reference_image": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAAAAAAAD...",
+    "main_image": "https://example.com/main.jpg",
+    "reference_image": "https://example.com/reference.jpg",
     "prompt": "参考色调，移除图1原有的光照并参考图2的光照和色调对图1重新照明",
     "seed": 669108351604920,
     "steps": 8,
@@ -67,19 +71,31 @@ This API has been simplified to accept only the required images without needing 
 }
 ```
 
+Or with base64:
+
+```json
+{
+  "input": {
+    "main_image": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAAAAAAAD...",
+    "reference_image": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAAAAAAAD...",
+    "prompt": "参考色调，移除图1原有的光照并参考图2的光照和色调对图1重新照明"
+  }
+}
+```
+
 The following tables describe the fields within the `input` object:
 
-| Field Path                | Type    | Required | Description                                                                                                                    |
-| ------------------------- | ------- | -------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `input`                   | Object  | Yes      | Top-level object containing request data.                                                                                      |
-| `input.main_image`        | String  | Yes      | Base64 encoded string of the main image to be edited. Data URI prefix (e.g., `data:image/png;base64,`) is optional.           |
-| `input.reference_image`   | String  | Yes      | Base64 encoded string of the reference image. Data URI prefix (e.g., `data:image/png;base64,`) is optional.                   |
-| `input.prompt`            | String  | No       | Text prompt describing the editing task. Default: "参考色调，移除图1原有的光照并参考图2的光照和色调对图1重新照明"                    |
-| `input.seed`              | Integer | No       | Seed for reproducible generation. Default: 669108351604920                                                                     |
-| `input.steps`             | Integer | No       | Number of sampling steps. Default: 8                                                                                           |
-| `input.cfg`               | Float   | No       | CFG scale value. Default: 1                                                                                                    |
-| `input.upscale_seed`      | Integer | No       | Seed for upscaling process. Default: 302564338                                                                                 |
-| `input.comfy_org_api_key` | String  | No       | Optional per-request Comfy.org API key for API Nodes. Overrides the `COMFY_ORG_API_KEY` environment variable if both are set. |
+| Field Path                | Type    | Required | Description                                                                                                                                |
+| ------------------------- | ------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `input`                   | Object  | Yes      | Top-level object containing request data.                                                                                                  |
+| `input.main_image`        | String  | Yes      | Main image to be edited. Can be a URL (http/https) or base64 encoded string (with optional data URI prefix).                              |
+| `input.reference_image`   | String  | Yes      | Reference image for style/lighting transfer. Can be a URL (http/https) or base64 encoded string (with optional data URI prefix).          |
+| `input.prompt`            | String  | No       | Text prompt describing the editing task. Default: "参考色调，移除图1原有的光照并参考图2的光照和色调对图1重新照明"                                 |
+| `input.seed`              | Integer | No       | Seed for reproducible generation. Default: 669108351604920                                                                                 |
+| `input.steps`             | Integer | No       | Number of sampling steps. Default: 8                                                                                                       |
+| `input.cfg`               | Float   | No       | CFG scale value. Default: 1                                                                                                                |
+| `input.upscale_seed`      | Integer | No       | Seed for upscaling process. Default: 302564338                                                                                             |
+| `input.comfy_org_api_key` | String  | No       | Optional per-request Comfy.org API key for API Nodes. Overrides the `COMFY_ORG_API_KEY` environment variable if both are set.             |
 
 > [!NOTE]
 >
@@ -145,6 +161,24 @@ To interact with your deployed RunPod endpoint:
 ### Generate Image (Sync Example)
 
 Send your images to the `/runsync` endpoint (waits for completion). Replace `<api_key>` and `<endpoint_id>`. The `-d` value should contain the [JSON input described above](#input).
+
+**Using URLs:**
+
+```bash
+curl -X POST \
+  -H "Authorization: Bearer <api_key>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "input": {
+      "main_image": "https://example.com/main.jpg",
+      "reference_image": "https://example.com/reference.jpg",
+      "prompt": "参考色调，移除图1原有的光照并参考图2的光照和色调对图1重新照明"
+    }
+  }' \
+  https://api.runpod.ai/v2/<endpoint_id>/runsync
+```
+
+**Using Base64:**
 
 ```bash
 curl -X POST \

@@ -409,9 +409,9 @@ def validate_input(job_input):
     if reference_image is None:
         return None, "Missing 'reference_image' parameter"
     
-    # Validate image format (must be base64 string)
+    # Validate image format (must be base64 string or URL)
     if not isinstance(main_image, str) or not isinstance(reference_image, str):
-        return None, "'main_image' and 'reference_image' must be base64 encoded strings"
+        return None, "'main_image' and 'reference_image' must be base64 encoded strings or URLs"
     
     # Optional parameters
     prompt = job_input.get("prompt", "参考色调，移除图1原有的光照并参考图2的光照和色调对图1重新照明")
@@ -470,6 +470,41 @@ def check_server(url, retries=500, delay=50):
         f"worker-comfyui - Failed to connect to server at {url} after {retries} attempts."
     )
     return False
+
+
+def download_image_from_url(url):
+    """
+    Download an image from a URL and return it as a base64 encoded string.
+    
+    Args:
+        url (str): The URL of the image to download
+    
+    Returns:
+        str: Base64 encoded image string
+    
+    Raises:
+        Exception: If the download fails or the response is not an image
+    """
+    try:
+        print(f"worker-comfyui - Downloading image from URL: {url}")
+        response = requests.get(url, timeout=30)
+        response.raise_for_status()
+        
+        # Verify content type is an image
+        content_type = response.headers.get('content-type', '')
+        if not content_type.startswith('image/'):
+            raise ValueError(f"URL does not point to an image. Content-Type: {content_type}")
+        
+        # Convert to base64
+        image_base64 = base64.b64encode(response.content).decode('utf-8')
+        print(f"worker-comfyui - Successfully downloaded and encoded image from URL")
+        return image_base64
+    except requests.Timeout:
+        raise Exception(f"Timeout downloading image from URL: {url}")
+    except requests.RequestException as e:
+        raise Exception(f"Error downloading image from URL: {url} - {e}")
+    except Exception as e:
+        raise Exception(f"Unexpected error downloading image from URL: {url} - {e}")
 
 
 def upload_images(images):
@@ -771,13 +806,29 @@ def handler(job):
         return {"error": error_message}
 
     # Extract validated data
-    main_image_base64 = validated_data["main_image"]
-    reference_image_base64 = validated_data["reference_image"]
+    main_image_input = validated_data["main_image"]
+    reference_image_input = validated_data["reference_image"]
     prompt = validated_data["prompt"]
     seed = validated_data["seed"]
     steps = validated_data["steps"]
     cfg = validated_data["cfg"]
     upscale_seed = validated_data["upscale_seed"]
+    
+    # Convert URLs to base64 if needed
+    try:
+        # Check if main_image is a URL or base64
+        if main_image_input.startswith(('http://', 'https://')):
+            main_image_base64 = download_image_from_url(main_image_input)
+        else:
+            main_image_base64 = main_image_input
+        
+        # Check if reference_image is a URL or base64
+        if reference_image_input.startswith(('http://', 'https://')):
+            reference_image_base64 = download_image_from_url(reference_image_input)
+        else:
+            reference_image_base64 = reference_image_input
+    except Exception as e:
+        return {"error": f"Failed to process image input: {e}"}
 
     # Make sure that the ComfyUI HTTP API is available before proceeding
     if not check_server(
