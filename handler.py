@@ -165,6 +165,7 @@ def create_workflow_template(main_image_name="main.jpg", reference_image_name="r
             "inputs": {
                 "upscale_method": "lanczos",
                 "megapixels": 1,
+                "resolution_steps": 1,
                 "image": ["31", 0]
             },
             "class_type": "ImageScaleToTotalPixels",
@@ -174,6 +175,7 @@ def create_workflow_template(main_image_name="main.jpg", reference_image_name="r
             "inputs": {
                 "upscale_method": "lanczos",
                 "megapixels": 1,
+                "resolution_steps": 1,
                 "image": ["7", 0]
             },
             "class_type": "ImageScaleToTotalPixels",

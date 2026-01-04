@@ -1,0 +1,6 @@
+{
+  "input": {
+    "main_image": "https://example.com/main.jpg",
+    "reference_image": "https://example.com/reference.jpg"
+  }
+}
