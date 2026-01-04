@@ -51,48 +51,35 @@ Use the `/runsync` endpoint for synchronous requests that wait for the job to co
 
 ### Input
 
+This API has been simplified to accept only the required images without needing to provide the full workflow JSON. The workflow is constructed automatically on the server side.
+
 ```json
 {
   "input": {
-    "workflow": {
-      "6": {
-        "inputs": {
-          "text": "a ball on the table",
-          "clip": ["30", 1]
-        },
-        "class_type": "CLIPTextEncode",
-        "_meta": {
-          "title": "CLIP Text Encode (Positive Prompt)"
-        }
-      }
-    },
-    "images": [
-      {
-        "name": "input_image_1.png",
-        "image": "data:image/png;base64,iVBOR..."
-      }
-    ]
+    "main_image": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAAAAAAAD...",
+    "reference_image": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAAAAAAAD...",
+    "prompt": "参考色调，移除图1原有的光照并参考图2的光照和色调对图1重新照明",
+    "seed": 669108351604920,
+    "steps": 8,
+    "cfg": 1,
+    "upscale_seed": 302564338
   }
 }
 ```
 
 The following tables describe the fields within the `input` object:
 
-| Field Path                | Type   | Required | Description                                                                                                                                |
-| ------------------------- | ------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `input`                   | Object | Yes      | Top-level object containing request data.                                                                                                  |
-| `input.workflow`          | Object | Yes      | The ComfyUI workflow exported in the [required format](#getting-the-workflow-json).                                                        |
-| `input.images`            | Array  | No       | Optional array of input images. Each image is uploaded to ComfyUI's `input` directory and can be referenced by its `name` in the workflow. |
-| `input.comfy_org_api_key` | String | No       | Optional per-request Comfy.org API key for API Nodes. Overrides the `COMFY_ORG_API_KEY` environment variable if both are set.              |
-
-#### `input.images` Object
-
-Each object within the `input.images` array must contain:
-
-| Field Name | Type   | Required | Description                                                                                                                       |
-| ---------- | ------ | -------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `name`     | String | Yes      | Filename used to reference the image in the workflow (e.g., via a "Load Image" node). Must be unique within the array.            |
-| `image`    | String | Yes      | Base64 encoded string of the image. A data URI prefix (e.g., `data:image/png;base64,`) is optional and will be handled correctly. |
+| Field Path                | Type    | Required | Description                                                                                                                    |
+| ------------------------- | ------- | -------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `input`                   | Object  | Yes      | Top-level object containing request data.                                                                                      |
+| `input.main_image`        | String  | Yes      | Base64 encoded string of the main image to be edited. Data URI prefix (e.g., `data:image/png;base64,`) is optional.           |
+| `input.reference_image`   | String  | Yes      | Base64 encoded string of the reference image. Data URI prefix (e.g., `data:image/png;base64,`) is optional.                   |
+| `input.prompt`            | String  | No       | Text prompt describing the editing task. Default: "参考色调，移除图1原有的光照并参考图2的光照和色调对图1重新照明"                    |
+| `input.seed`              | Integer | No       | Seed for reproducible generation. Default: 669108351604920                                                                     |
+| `input.steps`             | Integer | No       | Number of sampling steps. Default: 8                                                                                           |
+| `input.cfg`               | Float   | No       | CFG scale value. Default: 1                                                                                                    |
+| `input.upscale_seed`      | Integer | No       | Seed for upscaling process. Default: 302564338                                                                                 |
+| `input.comfy_org_api_key` | String  | No       | Optional per-request Comfy.org API key for API Nodes. Overrides the `COMFY_ORG_API_KEY` environment variable if both are set. |
 
 > [!NOTE]
 >
@@ -157,27 +144,37 @@ To interact with your deployed RunPod endpoint:
 
 ### Generate Image (Sync Example)
 
-Send a workflow to the `/runsync` endpoint (waits for completion). Replace `<api_key>` and `<endpoint_id>`. The `-d` value should contain the [JSON input described above](#input).
+Send your images to the `/runsync` endpoint (waits for completion). Replace `<api_key>` and `<endpoint_id>`. The `-d` value should contain the [JSON input described above](#input).
 
 ```bash
 curl -X POST \
   -H "Authorization: Bearer <api_key>" \
   -H "Content-Type: application/json" \
-  -d '{"input":{"workflow":{... your workflow JSON ...}}}' \
+  -d '{
+    "input": {
+      "main_image": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAAAAAAAD...",
+      "reference_image": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAAAAAAAD...",
+      "prompt": "参考色调，移除图1原有的光照并参考图2的光照和色调对图1重新照明"
+    }
+  }' \
   https://api.runpod.ai/v2/<endpoint_id>/runsync
 ```
 
 You can also use the `/run` endpoint for asynchronous jobs and then poll the `/status` to see when the job is done. Or you [add a `webhook` into your request](https://docs.runpod.io/serverless/endpoints/send-requests#webhook-notifications) to be notified when the job is done.
 
-Refer to [`test_input.json`](./test_input.json) for a complete input example.
+Refer to [`test_input_simple.json`](./test_input_simple.json) for a complete input example.
 
-## Getting the Workflow JSON
+## API Design
 
-To get the correct `workflow` JSON for the API:
+This API is optimized for the Qwen Image Edit use case. Instead of requiring users to provide the full ComfyUI workflow JSON, it accepts only the essential inputs:
 
-1.  Open ComfyUI in your browser.
-2.  In the top navigation, select `Workflow > Export (API)`
-3.  A `workflow.json` file will be downloaded. Use the content of this file as the value for the `input.workflow` field in your API requests.
+- **Main Image**: The image to be edited
+- **Reference Image**: The reference image for style/lighting transfer
+- **Optional Parameters**: Prompt, seed, steps, CFG, and upscale settings
+
+The handler automatically constructs the complete ComfyUI workflow internally using a predefined template, making the API much simpler to use.
+
+The original workflow-based input format is still available in the code history for reference.
 
 ## Further Documentation
 

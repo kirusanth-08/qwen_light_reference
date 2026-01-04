@@ -40,6 +40,257 @@ COMFY_HOST = "127.0.0.1:8188"
 REFRESH_WORKER = os.environ.get("REFRESH_WORKER", "false").lower() == "true"
 
 # ---------------------------------------------------------------------------
+# Workflow Template
+# ---------------------------------------------------------------------------
+
+
+def create_workflow_template(main_image_name="main.jpg", reference_image_name="reference.jpg", prompt="参考色调，移除图1原有的光照并参考图2的光照和色调对图1重新照明", seed=669108351604920, steps=8, cfg=1, upscale_seed=302564338):
+    """
+    Creates a complete workflow template for the Qwen Image Edit pipeline.
+    
+    Args:
+        main_image_name (str): Name of the main image file
+        reference_image_name (str): Name of the reference image file
+        prompt (str): Text prompt for the image editing task
+        seed (int): Seed for KSampler
+        steps (int): Number of sampling steps
+        cfg (float): CFG scale
+        upscale_seed (int): Seed for upscaling
+    
+    Returns:
+        dict: Complete workflow dictionary
+    """
+    return {
+        "1": {
+            "inputs": {
+                "strength": 1,
+                "model": ["2", 0]
+            },
+            "class_type": "CFGNorm",
+            "_meta": {"title": "CFGNorm"}
+        },
+        "2": {
+            "inputs": {
+                "shift": 3,
+                "model": ["20", 0]
+            },
+            "class_type": "ModelSamplingAuraFlow",
+            "_meta": {"title": "ModelSamplingAuraFlow"}
+        },
+        "3": {
+            "inputs": {
+                "prompt": "",
+                "clip": ["76", 0],
+                "vae": ["22", 0],
+                "image1": ["39", 0],
+                "image2": ["40", 0]
+            },
+            "class_type": "TextEncodeQwenImageEditPlus",
+            "_meta": {"title": "TextEncodeQwenImageEditPlus"}
+        },
+        "7": {
+            "inputs": {
+                "image": reference_image_name
+            },
+            "class_type": "LoadImage",
+            "_meta": {"title": "Load Image"}
+        },
+        "10": {
+            "inputs": {
+                "pixels": ["39", 0],
+                "vae": ["22", 0]
+            },
+            "class_type": "VAEEncode",
+            "_meta": {"title": "VAE Encode"}
+        },
+        "11": {
+            "inputs": {
+                "prompt": prompt,
+                "clip": ["76", 0],
+                "vae": ["22", 0],
+                "image1": ["39", 0],
+                "image2": ["40", 0]
+            },
+            "class_type": "TextEncodeQwenImageEditPlus",
+            "_meta": {"title": "TextEncodeQwenImageEditPlus"}
+        },
+        "12": {
+            "inputs": {
+                "samples": ["14", 0],
+                "vae": ["22", 0]
+            },
+            "class_type": "VAEDecode",
+            "_meta": {"title": "VAE Decode"}
+        },
+        "14": {
+            "inputs": {
+                "seed": seed,
+                "steps": steps,
+                "cfg": cfg,
+                "sampler_name": "euler",
+                "scheduler": "simple",
+                "denoise": 1,
+                "model": ["1", 0],
+                "positive": ["11", 0],
+                "negative": ["3", 0],
+                "latent_image": ["10", 0]
+            },
+            "class_type": "KSampler",
+            "_meta": {"title": "KSampler"}
+        },
+        "20": {
+            "inputs": {
+                "lora_name": "Qwen-Image-Edit-Lightning-8steps-V1.0.safetensors",
+                "strength_model": 1,
+                "model": ["81", 0]
+            },
+            "class_type": "LoraLoaderModelOnly",
+            "_meta": {"title": "LoraLoaderModelOnly"}
+        },
+        "22": {
+            "inputs": {
+                "vae_name": "qwen_image_vae.safetensors"
+            },
+            "class_type": "VAELoader",
+            "_meta": {"title": "Load VAE"}
+        },
+        "31": {
+            "inputs": {
+                "image": main_image_name
+            },
+            "class_type": "LoadImage",
+            "_meta": {"title": "Load Image"}
+        },
+        "39": {
+            "inputs": {
+                "upscale_method": "lanczos",
+                "megapixels": 1,
+                "image": ["31", 0]
+            },
+            "class_type": "ImageScaleToTotalPixels",
+            "_meta": {"title": "ImageScaleToTotalPixels"}
+        },
+        "40": {
+            "inputs": {
+                "upscale_method": "lanczos",
+                "megapixels": 1,
+                "image": ["7", 0]
+            },
+            "class_type": "ImageScaleToTotalPixels",
+            "_meta": {"title": "ImageScaleToTotalPixels"}
+        },
+        "76": {
+            "inputs": {
+                "clip_name": "qwen_2.5_vl_7b.safetensors",
+                "type": "stable_diffusion",
+                "device": "default"
+            },
+            "class_type": "CLIPLoader",
+            "_meta": {"title": "Load CLIP"}
+        },
+        "77": {
+            "inputs": {
+                "unet_name": "Qwen-Image-Edit-2509_fp8_e4m3fn.safetensors",
+                "weight_dtype": "default"
+            },
+            "class_type": "UNETLoader",
+            "_meta": {"title": "Load Diffusion Model"}
+        },
+        "81": {
+            "inputs": {
+                "lora_name": "参考色调.safetensors",
+                "strength_model": 1,
+                "model": ["77", 0]
+            },
+            "class_type": "LoraLoaderModelOnly",
+            "_meta": {"title": "LoraLoaderModelOnly"}
+        },
+        "82": {
+            "inputs": {
+                "model": "seedvr2_ema_3b_fp16.safetensors",
+                "device": "cuda:0",
+                "blocks_to_swap": 32,
+                "swap_io_components": True,
+                "offload_device": "cpu",
+                "cache_model": "sdpa",
+                "attention_mode": "sdpa"
+            },
+            "class_type": "SeedVR2LoadDiTModel",
+            "_meta": {"title": "SeedVR2 (Down)Load DiT Model"}
+        },
+        "83": {
+            "inputs": {
+                "model": "ema_vae_fp16.safetensors",
+                "device": "cuda:0",
+                "encode_tiled": True,
+                "encode_tile_size": 1024,
+                "encode_tile_overlap": 128,
+                "decode_tiled": True,
+                "decode_tile_size": 1024,
+                "decode_tile_overlap": 128,
+                "tile_debug": "false",
+                "offload_device": "cpu",
+                "cache_model": False
+            },
+            "class_type": "SeedVR2LoadVAEModel",
+            "_meta": {"title": "SeedVR2 (Down)Load VAE Model"}
+        },
+        "84": {
+            "inputs": {
+                "upscale_method": "lanczos",
+                "scale_by": 0.5,
+                "image": ["12", 0]
+            },
+            "class_type": "ImageScaleBy",
+            "_meta": {"title": "Upscale Image By"}
+        },
+        "85": {
+            "inputs": {
+                "seed": upscale_seed,
+                "resolution": ["103", 0],
+                "max_resolution": 4096,
+                "batch_size": 5,
+                "uniform_batch_size": False,
+                "color_correction": "lab",
+                "temporal_overlap": 0,
+                "prepend_frames": 0,
+                "input_noise_scale": 0,
+                "latent_noise_scale": 0,
+                "offload_device": "cpu",
+                "enable_debug": False,
+                "image": ["84", 0],
+                "dit": ["82", 0],
+                "vae": ["83", 0]
+            },
+            "class_type": "SeedVR2VideoUpscaler",
+            "_meta": {"title": "SeedVR2 Video Upscaler (v2.5.17)"}
+        },
+        "87": {
+            "inputs": {
+                "filename_prefix": "ComfyUI",
+                "images": ["85", 0]
+            },
+            "class_type": "SaveImage",
+            "_meta": {"title": "Save Image"}
+        },
+        "97": {
+            "inputs": {
+                "image": ["31", 0]
+            },
+            "class_type": "GetImageSize+",
+            "_meta": {"title": "🔧 Get Image Size"}
+        },
+        "103": {
+            "inputs": {
+                "int_a": ["97", 0],
+                "float_b": 2
+            },
+            "class_type": "Multiply Int Float (JPS)",
+            "_meta": {"title": "Multiply Int Float (JPS)"}
+        }
+    }
+
+# ---------------------------------------------------------------------------
 # Helper: quick reachability probe of ComfyUI HTTP endpoint (port 8188)
 # ---------------------------------------------------------------------------
 
@@ -149,29 +400,38 @@ def validate_input(job_input):
         except json.JSONDecodeError:
             return None, "Invalid JSON format in input"
 
-    # Validate 'workflow' in input
-    workflow = job_input.get("workflow")
-    if workflow is None:
-        return None, "Missing 'workflow' parameter"
-
-    # Validate 'images' in input, if provided
-    images = job_input.get("images")
-    if images is not None:
-        if not isinstance(images, list) or not all(
-            "name" in image and "image" in image for image in images
-        ):
-            return (
-                None,
-                "'images' must be a list of objects with 'name' and 'image' keys",
-            )
-
+    # Validate required images
+    main_image = job_input.get("main_image")
+    reference_image = job_input.get("reference_image")
+    
+    if main_image is None:
+        return None, "Missing 'main_image' parameter"
+    if reference_image is None:
+        return None, "Missing 'reference_image' parameter"
+    
+    # Validate image format (must be base64 string)
+    if not isinstance(main_image, str) or not isinstance(reference_image, str):
+        return None, "'main_image' and 'reference_image' must be base64 encoded strings"
+    
+    # Optional parameters
+    prompt = job_input.get("prompt", "参考色调，移除图1原有的光照并参考图2的光照和色调对图1重新照明")
+    seed = job_input.get("seed", 669108351604920)
+    steps = job_input.get("steps", 8)
+    cfg = job_input.get("cfg", 1)
+    upscale_seed = job_input.get("upscale_seed", 302564338)
+    
     # Optional: API key for Comfy.org API Nodes, passed per-request
     comfy_org_api_key = job_input.get("comfy_org_api_key")
 
     # Return validated data and no error
     return {
-        "workflow": workflow,
-        "images": images,
+        "main_image": main_image,
+        "reference_image": reference_image,
+        "prompt": prompt,
+        "seed": seed,
+        "steps": steps,
+        "cfg": cfg,
+        "upscale_seed": upscale_seed,
         "comfy_org_api_key": comfy_org_api_key,
     }, None
 
@@ -511,8 +771,13 @@ def handler(job):
         return {"error": error_message}
 
     # Extract validated data
-    workflow = validated_data["workflow"]
-    input_images = validated_data.get("images")
+    main_image_base64 = validated_data["main_image"]
+    reference_image_base64 = validated_data["reference_image"]
+    prompt = validated_data["prompt"]
+    seed = validated_data["seed"]
+    steps = validated_data["steps"]
+    cfg = validated_data["cfg"]
+    upscale_seed = validated_data["upscale_seed"]
 
     # Make sure that the ComfyUI HTTP API is available before proceeding
     if not check_server(
@@ -524,15 +789,34 @@ def handler(job):
             "error": f"ComfyUI server ({COMFY_HOST}) not reachable after multiple retries."
         }
 
-    # Upload input images if they exist
-    if input_images:
-        upload_result = upload_images(input_images)
-        if upload_result["status"] == "error":
-            # Return upload errors
-            return {
-                "error": "Failed to upload one or more input images",
-                "details": upload_result["details"],
-            }
+    # Prepare images for upload
+    main_image_name = "main.jpg"
+    reference_image_name = "reference.jpg"
+    
+    input_images = [
+        {"name": main_image_name, "image": main_image_base64},
+        {"name": reference_image_name, "image": reference_image_base64}
+    ]
+    
+    # Upload input images
+    upload_result = upload_images(input_images)
+    if upload_result["status"] == "error":
+        # Return upload errors
+        return {
+            "error": "Failed to upload one or more input images",
+            "details": upload_result["details"],
+        }
+    
+    # Create workflow from template
+    workflow = create_workflow_template(
+        main_image_name=main_image_name,
+        reference_image_name=reference_image_name,
+        prompt=prompt,
+        seed=seed,
+        steps=steps,
+        cfg=cfg,
+        upscale_seed=upscale_seed
+    )
 
     ws = None
     client_id = str(uuid.uuid4())
