@@ -245,123 +245,15 @@
       },
       "82": {
         "inputs": {
-          "model": "seedvr2_ema_3b_fp16.safetensors",
-          "device": "cuda:0",
-          "blocks_to_swap": 32,
-          "swap_io_components": true,
-          "offload_device": "cuda:0",
-          "cache_model": "sdpa",
-          "attention_mode": "sdpa"
-        },
-        "class_type": "SeedVR2LoadDiTModel",
-        "_meta": {
-          "title": "SeedVR2 (Down)Load DiT Model"
-        }
-      },
-      "83": {
-        "inputs": {
-          "model": "ema_vae_fp16.safetensors",
-          "device": "cuda:0",
-          "encode_tiled": true,
-          "encode_tile_size": 1024,
-          "encode_tile_overlap": 128,
-          "decode_tiled": true,
-          "decode_tile_size": 1024,
-          "decode_tile_overlap": 128,
-          "tile_debug": "false",
-          "offload_device": "cuda:0",
-          "cache_model": true
-        },
-        "class_type": "SeedVR2LoadVAEModel",
-        "_meta": {
-          "title": "SeedVR2 (Down)Load VAE Model"
-        }
-      },
-      "84": {
-        "inputs": {
-          "upscale_method": "lanczos",
-          "scale_by": 0.5000000000000001,
-          "image": [
-            "12",
-            0
-          ]
-        },
-        "class_type": "ImageScaleBy",
-        "_meta": {
-          "title": "Upscale Image By"
-        }
-      },
-      "85": {
-        "inputs": {
-          "seed": 302564338,
-          "resolution": [
-            "103",
-            0
-          ],
-          "max_resolution": 4096,
-          "batch_size": 5,
-          "uniform_batch_size": false,
-          "color_correction": "lab",
-          "temporal_overlap": 0,
-          "prepend_frames": 0,
-          "input_noise_scale": 0,
-          "latent_noise_scale": 0,
-          "offload_device": "cuda:0",
-          "enable_debug": true,
-          "image": [
-            "84",
-            0
-          ],
-          "dit": [
-            "82",
-            0
-          ],
-          "vae": [
-            "83",
-            0
-          ]
-        },
-        "class_type": "SeedVR2VideoUpscaler",
-        "_meta": {
-          "title": "SeedVR2 Video Upscaler (v2.5.17)"
-        }
-      },
-      "87": {
-        "inputs": {
           "filename_prefix": "ComfyUI",
           "images": [
-            "85",
+            "12",
             0
           ]
         },
         "class_type": "SaveImage",
         "_meta": {
           "title": "Save Image"
-        }
-      },
-      "97": {
-        "inputs": {
-          "image": [
-            "31",
-            0
-          ]
-        },
-        "class_type": "GetImageSize+",
-        "_meta": {
-          "title": "🔧 Get Image Size"
-        }
-      },
-      "103": {
-        "inputs": {
-          "int_a": [
-            "97",
-            0
-          ],
-          "float_b": 2
-        },
-        "class_type": "Multiply Int Float (JPS)",
-        "_meta": {
-          "title": "Multiply Int Float (JPS)"
         }
       }
     },
