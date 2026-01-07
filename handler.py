@@ -213,7 +213,7 @@ def create_workflow_template(main_image_name="main.jpg", reference_image_name="r
                 "device": "cuda:0",
                 "blocks_to_swap": 32,
                 "swap_io_components": True,
-                "offload_device": "cpu",
+                "offload_device": "cuda:0",
                 "cache_model": "sdpa",
                 "attention_mode": "sdpa"
             },

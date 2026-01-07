@@ -249,7 +249,7 @@
           "device": "cuda:0",
           "blocks_to_swap": 32,
           "swap_io_components": true,
-          "offload_device": "cpu",
+          "offload_device": "cuda:0",
           "cache_model": "sdpa",
           "attention_mode": "sdpa"
         },
