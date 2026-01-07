@@ -231,8 +231,8 @@ def create_workflow_template(main_image_name="main.jpg", reference_image_name="r
                 "decode_tile_size": 1024,
                 "decode_tile_overlap": 128,
                 "tile_debug": "false",
-                "offload_device": "cpu",
-                "cache_model": False
+                "offload_device": "cuda:0",
+                "cache_model": True
             },
             "class_type": "SeedVR2LoadVAEModel",
             "_meta": {"title": "SeedVR2 (Down)Load VAE Model"}
@@ -258,8 +258,8 @@ def create_workflow_template(main_image_name="main.jpg", reference_image_name="r
                 "prepend_frames": 0,
                 "input_noise_scale": 0,
                 "latent_noise_scale": 0,
-                "offload_device": "cpu",
-                "enable_debug": False,
+                "offload_device": "cuda:0",
+                "enable_debug": True,
                 "image": ["84", 0],
                 "dit": ["82", 0],
                 "vae": ["83", 0]

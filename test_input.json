@@ -269,8 +269,8 @@
           "decode_tile_size": 1024,
           "decode_tile_overlap": 128,
           "tile_debug": "false",
-          "offload_device": "cpu",
-          "cache_model": false
+          "offload_device": "cuda:0",
+          "cache_model": true
         },
         "class_type": "SeedVR2LoadVAEModel",
         "_meta": {
@@ -306,8 +306,8 @@
           "prepend_frames": 0,
           "input_noise_scale": 0,
           "latent_noise_scale": 0,
-          "offload_device": "cpu",
-          "enable_debug": false,
+          "offload_device": "cuda:0",
+          "enable_debug": true,
           "image": [
             "84",
             0
