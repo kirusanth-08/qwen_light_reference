@@ -139,7 +139,7 @@ def create_workflow_template(main_image_name="main.jpg", reference_image_name="r
         },
         "20": {
             "inputs": {
-                "lora_name": "Qwen-Image-Edit-Lightning-8steps-V1.0.safetensors",
+                "lora_name": "Qwen-Image-Lightning-8steps-V2.0.safetensors",
                 "strength_model": 1,
                 "model": ["81", 0]
             },
