@@ -44,7 +44,7 @@ REFRESH_WORKER = os.environ.get("REFRESH_WORKER", "false").lower() == "true"
 # ---------------------------------------------------------------------------
 
 
-def create_workflow_template(main_image_name="main.jpg", reference_image_name="reference.jpg", prompt="参考色调，移除图1原有的光照并参考图2的光照和色调对图1重新照明", seed=669108351604920, steps=8, cfg=1, upscale_seed=302564338):
+def create_workflow_template(main_image_name="main.jpg", reference_image_name="reference.jpg", prompt="参考色调，移除图1原有的光照并参考图2的光照和色调对图1重新照明", seed=669108351604920, steps=8, cfg=1):
     """
     Creates a complete workflow template for the Qwen Image Edit pipeline.
     
@@ -55,7 +55,6 @@ def create_workflow_template(main_image_name="main.jpg", reference_image_name="r
         seed (int): Seed for KSampler
         steps (int): Number of sampling steps
         cfg (float): CFG scale
-        upscale_seed (int): Seed for upscaling
     
     Returns:
         dict: Complete workflow dictionary
@@ -140,7 +139,7 @@ def create_workflow_template(main_image_name="main.jpg", reference_image_name="r
         },
         "20": {
             "inputs": {
-                "lora_name": "Qwen-Image-Edit-Lightning-8steps-V1.0.safetensors",
+                "lora_name": "Qwen-Image-Lightning-8steps-V2.0.safetensors",
                 "strength_model": 1,
                 "model": ["81", 0]
             },
@@ -209,86 +208,11 @@ def create_workflow_template(main_image_name="main.jpg", reference_image_name="r
         },
         "82": {
             "inputs": {
-                "model": "seedvr2_ema_3b_fp16.safetensors",
-                "device": "cuda:0",
-                "blocks_to_swap": 32,
-                "swap_io_components": True,
-                "offload_device": "cuda:0",
-                "cache_model": "sdpa",
-                "attention_mode": "sdpa"
-            },
-            "class_type": "SeedVR2LoadDiTModel",
-            "_meta": {"title": "SeedVR2 (Down)Load DiT Model"}
-        },
-        "83": {
-            "inputs": {
-                "model": "ema_vae_fp16.safetensors",
-                "device": "cuda:0",
-                "encode_tiled": True,
-                "encode_tile_size": 1024,
-                "encode_tile_overlap": 128,
-                "decode_tiled": True,
-                "decode_tile_size": 1024,
-                "decode_tile_overlap": 128,
-                "tile_debug": "false",
-                "offload_device": "cuda:0",
-                "cache_model": True
-            },
-            "class_type": "SeedVR2LoadVAEModel",
-            "_meta": {"title": "SeedVR2 (Down)Load VAE Model"}
-        },
-        "84": {
-            "inputs": {
-                "upscale_method": "lanczos",
-                "scale_by": 0.5,
-                "image": ["12", 0]
-            },
-            "class_type": "ImageScaleBy",
-            "_meta": {"title": "Upscale Image By"}
-        },
-        "85": {
-            "inputs": {
-                "seed": upscale_seed,
-                "resolution": ["103", 0],
-                "max_resolution": 4096,
-                "batch_size": 5,
-                "uniform_batch_size": False,
-                "color_correction": "lab",
-                "temporal_overlap": 0,
-                "prepend_frames": 0,
-                "input_noise_scale": 0,
-                "latent_noise_scale": 0,
-                "offload_device": "cuda:0",
-                "enable_debug": True,
-                "image": ["84", 0],
-                "dit": ["82", 0],
-                "vae": ["83", 0]
-            },
-            "class_type": "SeedVR2VideoUpscaler",
-            "_meta": {"title": "SeedVR2 Video Upscaler (v2.5.17)"}
-        },
-        "87": {
-            "inputs": {
                 "filename_prefix": "ComfyUI",
-                "images": ["85", 0]
+                "images": ["12", 0]
             },
             "class_type": "SaveImage",
             "_meta": {"title": "Save Image"}
-        },
-        "97": {
-            "inputs": {
-                "image": ["31", 0]
-            },
-            "class_type": "GetImageSize+",
-            "_meta": {"title": "🔧 Get Image Size"}
-        },
-        "103": {
-            "inputs": {
-                "int_a": ["97", 0],
-                "float_b": 2
-            },
-            "class_type": "Multiply Int Float (JPS)",
-            "_meta": {"title": "Multiply Int Float (JPS)"}
         }
     }
 
@@ -420,7 +344,6 @@ def validate_input(job_input):
     seed = job_input.get("seed", 669108351604920)
     steps = job_input.get("steps", 8)
     cfg = job_input.get("cfg", 1)
-    upscale_seed = job_input.get("upscale_seed", 302564338)
     
     # Optional: API key for Comfy.org API Nodes, passed per-request
     comfy_org_api_key = job_input.get("comfy_org_api_key")
@@ -433,7 +356,6 @@ def validate_input(job_input):
         "seed": seed,
         "steps": steps,
         "cfg": cfg,
-        "upscale_seed": upscale_seed,
         "comfy_org_api_key": comfy_org_api_key,
     }, None
 
@@ -814,7 +736,6 @@ def handler(job):
     seed = validated_data["seed"]
     steps = validated_data["steps"]
     cfg = validated_data["cfg"]
-    upscale_seed = validated_data["upscale_seed"]
     
     # Convert URLs to base64 if needed
     try:
@@ -867,8 +788,7 @@ def handler(job):
         prompt=prompt,
         seed=seed,
         steps=steps,
-        cfg=cfg,
-        upscale_seed=upscale_seed
+        cfg=cfg
     )
 
     ws = None

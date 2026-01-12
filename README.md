@@ -65,8 +65,7 @@ Images can be provided as either:
     "prompt": "参考色调，移除图1原有的光照并参考图2的光照和色调对图1重新照明",
     "seed": 669108351604920,
     "steps": 8,
-    "cfg": 1,
-    "upscale_seed": 302564338
+    "cfg": 1
   }
 }
 ```
@@ -94,7 +93,6 @@ The following tables describe the fields within the `input` object:
 | `input.seed`              | Integer | No       | Seed for reproducible generation. Default: 669108351604920                                                                                 |
 | `input.steps`             | Integer | No       | Number of sampling steps. Default: 8                                                                                                       |
 | `input.cfg`               | Float   | No       | CFG scale value. Default: 1                                                                                                                |
-| `input.upscale_seed`      | Integer | No       | Seed for upscaling process. Default: 302564338                                                                                             |
 | `input.comfy_org_api_key` | String  | No       | Optional per-request Comfy.org API key for API Nodes. Overrides the `COMFY_ORG_API_KEY` environment variable if both are set.             |
 
 > [!NOTE]
